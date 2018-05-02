@@ -32,8 +32,8 @@ def main(args):
 
     # env = gym.make(ENVIRONMENT) #TODO
     # env = wrappers.Monitor(env, SUMMARY_DIR, force=True) #TODO
-    env = gameEnv(size=10,startDelay=5)
-    state_dim = 3#env.observation_space.shape[0] #TODO
+    env = gameEnv(size=5,startDelay=1)
+    state_dim = 84*84*3#env.observation_space.shape[0] #TODO
     action_dim = env.action_space.n #TODO
 
     critic = CriticNetwork(state_dim, action_dim, learning_rate=args.learning_rate, epsilon=args.epsilon,

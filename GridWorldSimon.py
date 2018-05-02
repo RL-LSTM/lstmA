@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    env = gameEnv(size=10,startDelay=5)
+    env = gameEnv(size=5,startDelay=2)
     # game main loop
     isGameOver = False
     while not isGameOver:
@@ -16,7 +16,7 @@ def main():
                 continue
             else:
                 break
-        state, reward, isGameOver = env.step(float(action))
+        state, reward, isGameOver,info = env.step(float(action))
         env.render()
         # plt.imshow(state, interpolation="nearest")
         # plt.title("Score: {0}, Reward: {1}, GameOver: {2}".format(float(env.getScore()),float(reward),isGameOver))
@@ -81,20 +81,28 @@ class gameEnv():
         self.action_space = ActionSpace()
         self.sizeX = size
         self.sizeY = size
-        self.score = 0
-        self.isSequenceFollowed = True
         self.actions = 4
-        self.startDelay = startDelay
-        self.startItems = np.random.choice(startDelay,startDelay, replace=False)
-        self.objects = []
+        self.startDelayConst = startDelay
         self.partial = partial
         self.fruitNum = fruitNum
         self.holeNum = holeNum
+        self.startItems = []
+        self.objects = []
+        self.done = False
         self.reward = 0
         self.penalty = 0
-        self.done = False
-        a = self.reset()
-        # plt.imshow(a, interpolation="nearest")
+        self.score = 0
+        self.startDelay = self.startDelayConst
+        self.isSequenceFollowed = True
+        self.objects = []
+        # create hero
+        self.objects.append(self.createHero())
+        # create items
+        self.startItems = np.random.choice(self.startDelayConst, self.startDelayConst, replace=False)
+        for colorNum in self.startItems:
+            itemColor = colorByNum(colorNum)
+            item = self.createItem(color=itemColor)
+            self.objects.append(item)
 
     def seed(self,seedNum):
          np.random.seed(seedNum)
@@ -145,6 +153,7 @@ class gameEnv():
         # create hero
         self.objects.append(self.createHero())
         # create items
+        self.startItems = np.random.choice(self.startDelayConst, self.startDelayConst, replace=False)
         for colorNum in self.startItems:
             itemColor = colorByNum(colorNum)
             item = self.createItem(color=itemColor)
@@ -156,6 +165,12 @@ class gameEnv():
         # for idx in range(self.holeNum):
         #     self.objects.append(self.createHole())
         # first init state
+        self.done = False
+        self.reward = 0
+        self.penalty = 0
+        self.score = 0
+        self.startDelay = self.startDelayConst
+        self.isSequenceFollowed = True
         state = self.renderEnv()
         self.state = state
         return state
@@ -249,11 +264,11 @@ class gameEnv():
         if self.startDelay > 0:
             self.showNextItem()
             self.startDelay -= 1
-            return self.renderEnv(),0,False
+            return self.renderEnv(),0,False,None
         # first game frame
         if self.startDelay == 0:
             self.startDelay -= 1
-            return self.reset(),0,False
+            return self.reset(),0,False,None
         # rest of the game
         self.penalty = self.moveChar(action)
         self.reward, self.done = self.checkGoal()
