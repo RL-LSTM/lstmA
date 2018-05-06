@@ -92,17 +92,12 @@ class gameEnv():
         self.reward = 0
         self.penalty = 0
         self.score = 0
+        self.numOfSteps = 0
+        self.MaxNumOfStepsPerGame = self.sizeX*self.sizeY*10
         self.startDelay = self.startDelayConst
-        self.isSequenceFollowed = True
         self.objects = []
-        # create hero
-        self.objects.append(self.createHero())
-        # create items
-        self.startItems = np.random.choice(self.startDelayConst, self.startDelayConst, replace=False)
-        for colorNum in self.startItems:
-            itemColor = colorByNum(colorNum)
-            item = self.createItem(color=itemColor)
-            self.objects.append(item)
+        #prepare first time for play
+        self.reset()
 
     def seed(self,seedNum):
          np.random.seed(seedNum)
@@ -149,15 +144,10 @@ class gameEnv():
             return None
 
     def reset(self):
+        plt.close('all')
         self.objects = []
-        # create hero
-        self.objects.append(self.createHero())
         # create items
         self.startItems = np.random.choice(self.startDelayConst, self.startDelayConst, replace=False)
-        for colorNum in self.startItems:
-            itemColor = colorByNum(colorNum)
-            item = self.createItem(color=itemColor)
-            self.objects.append(item)
         # # create bugs
         # for idx in range(self.fruitNum):
         #     self.objects.append(self.createFruit())
@@ -173,7 +163,18 @@ class gameEnv():
         self.isSequenceFollowed = True
         state = self.renderEnv()
         self.state = state
+        self.numOfSteps = 0
         return state
+
+    def startPlay(self):
+        # create hero
+        self.objects = []
+        self.objects.append(self.createHero())
+        for colorNum in self.startItems:
+            itemColor = colorByNum(colorNum)
+            item = self.createItem(color=itemColor)
+            self.objects.append(item)
+
 
     def moveChar(self, direction):
         # 0 - up, 1 - down, 2 - left, 3 - right
@@ -252,12 +253,14 @@ class gameEnv():
         return a
 
     def render(self):
+        # pass
         state = self.renderEnv()
         # show curent step
         plt.imshow(state, interpolation="nearest")
         plt.title("Score: {0}, Reward: {1}, GameOver: {2}".format(float(self.getScore()), float(self.reward), self.done))
         plt.draw()
         plt.show(block=False)
+        # plt.hold(True)
 
     def step(self, action):
         # game pre-start
@@ -268,13 +271,20 @@ class gameEnv():
         # first game frame
         if self.startDelay == 0:
             self.startDelay -= 1
-            return self.reset(),0,False,None
+            self.startPlay()
+            # return self.reset(),0,False,None
+            return self.renderEnv(),0,False,None
         # rest of the game
         self.penalty = self.moveChar(action)
         self.reward, self.done = self.checkGoal()
         self.score += (self.reward+self.penalty)
         state = self.renderEnv()
-        return state, (self.reward + self.penalty), self.done, None
+        # check if too many step for game
+        self.numOfSteps += 1
+        if self.numOfSteps >= self.MaxNumOfStepsPerGame:
+            return state, (self.reward + self.penalty), True, None
+        else:
+            return state, (self.reward + self.penalty), self.done, None
 
 
     def getScore(self):

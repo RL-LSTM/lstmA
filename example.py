@@ -32,7 +32,7 @@ def main(args):
 
     # env = gym.make(ENVIRONMENT) #TODO
     # env = wrappers.Monitor(env, SUMMARY_DIR, force=True) #TODO
-    env = gameEnv(size=5,startDelay=1)
+    env = gameEnv(size=5,startDelay=2)
     state_dim = 84*84*3#env.observation_space.shape[0] #TODO
     action_dim = env.action_space.n #TODO
 
